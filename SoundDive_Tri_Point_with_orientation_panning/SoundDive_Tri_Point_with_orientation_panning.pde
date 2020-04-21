@@ -4,6 +4,20 @@
   Code and project by: Halfdan Hauch Jensen, halj@itu.dk, AIR LAB, IT University of Cph.
   Please make sure to credit when reusing this code... :-)
 */
+
+/*
+ For Windows 10, 64bit:
+ 
+ 1) Download and install Kinect 1.7 SDK
+ 2) Download Zadig and replace the drivers for
+       Xbox NUI Camera
+       Xbox NUI Motor
+       Kinect Audio Device
+    with LibusbK.
+ 
+ The kinect should now work. If the error "Isochronous transfer error: 1" appears, don't panic, it should work. If screen remains grey, try restarting the sketch a couple of times.
+
+*/
 import processing.video.*;
 import org.openkinect.freenect.*;
 import org.openkinect.processing.*;
@@ -36,25 +50,33 @@ float frontAngle = 0.0; // front facing angle of player
 float rotation;
 boolean playerFoundThisFrame = false; // flag showing if player was tracked in current frame
 
+// Setup window
+int w_width = 640;
+int w_height = 480;
+
+
 // Setup sounds
-// Format: Name, Color, X, Y, Z, Distance Threshold and Channel (track)
-Sound backgroundHigh = new Sound("Background High", color(255,255,255), 0,0,10, 0, 1);
-Sound backgroundDeep = new Sound("Background Deep", color(255,255,255), 0,0,-10, 0, 2);
+// Format: Name, Color, X, Y, Z, Distance Threshold, Channel (track) and Sub Sound
 
-// Format: Name, Color, X, Y, Z, Distance Threshold and Channel (track)
-Sound soundGreen = new Sound("Green", color(0, 255, 0), 150, 150, 0, 100, 3);
-Sound soundBlue = new Sound("Blue", color(0, 0, 255), 300, 300, 0, 200, 4);
-Sound soundRed = new Sound("Red", color(255, 0, 0), 400, 150, 0, 200, 5);
+  // Background
+  backgroundAudio backgroundHigh = new backgroundAudio("Background High", 0,0,10, 1);
+  backgroundAudio backgroundDeep = new backgroundAudio("Background Deep", 0,0,-10, 2);
+  
+  // High
+  Sound droneHighway = new Sound("Drone Highway", color(0, 0, 255), 0, 100, 5, 30, 4);
+  
+  // Middle
+  Sound dataTransfer = new Sound("Data transfer", color(255, 0, 255), 100, 10, 0, 200, 7);
+  Sound soundWhite = new Sound("White", color(255, 255, 255), 550, 20, 0, 200, 6);
+  
+  // Deep
+  Sound datacenter = new Sound("Data Center", color(0, 255, 0), w_width - 1, w_height-10, -5, 100, 3);
+  Sound cableDrone = new Sound("Cable Drone", color(255, 255, 0), w_width-(w_width/3)-50, w_height-50, -10, w_width/2, 8);
+  Sound cableDroneScan = new Sound("Cable Drone Scan", color(255, 255, 255), cableDrone.x, cableDrone.y, cableDrone.z, w_width/2, 9);
+  Sound dataCable = new Sound("Data Cable", color(255,0,0), 0, w_height-30, -10, 60, 5);
+  
 
-Sound soundPurple = new Sound("Purple", color(255, 0, 255), 100, 10, 0, 200, 7);
-Sound soundWhite = new Sound("White", color(255, 255, 255), 550, 20, 0, 200, 6);
-
-Sound soundYellow = new Sound("Yellow", color(255, 255, 0), 550, 400, 0, 100, 8);
-  int soundYellowSpeedX = 2;
-  int soundYellowSpeedY = 0;
 void setup() {
-  println("Starting up soundDive");
-
   size(640, 480);
   
   // setting up the Kinect
@@ -85,6 +107,8 @@ void setup() {
 
   currTime = prevTime = millis();
   prevPlayerPositionX = prevPlayerPositionY = Float.MAX_VALUE;
+  
+  cableDrone.startMove(1,0,0);
 }
 
 
@@ -170,6 +194,11 @@ void draw() {
   fill(255,255,255);
   ellipse(width/2,height/2,10,10);
   
+  // Center line
+  stroke(255,255,255);
+  line(0,height/2,width,height/2);
+  noStroke();
+  
   // Get a rotation of player
   rotation = round(frontAngle);
   
@@ -177,74 +206,49 @@ void draw() {
   backgroundHigh.getDistance();
   backgroundDeep.getDistance();
   
-  // Yellow sound
-  if (playerPosition.z == soundYellow.z || playerPosition.z > soundYellow.z && playerPosition.z < soundYellow.z + 3 || playerPosition.z < soundYellow.z && playerPosition.z > soundYellow.z - 3){
-    soundYellow.show(40);
-    soundYellow.getDistance();
-    soundYellow.getPan();
+  // Drone Highway
+  droneHighway.drawRectangle(width, 10);
+  droneHighway.getDistance();
+  droneHighway.getPan();
   
-    
-    soundYellow.x += soundYellowSpeedX;
-    if (soundYellow.x == width){
-      soundYellowSpeedX = -soundYellowSpeedX;
-    }
-    if (soundYellow.x < 0){
-      soundYellowSpeedX = -soundYellowSpeedX;
-    }
-    if (distanceLines){
-      strokeWeight(abs(soundYellow.distanceStroke));
-      stroke(255,255,0);
-      line(soundYellow.x,soundYellow.y,playerPosition.x,playerPosition.y);
-    }
+  // Cable Drone
+  //if (playerPosition.z == cableDrone.z || playerPosition.z > cableDrone.z && cableDrone.z < cableDrone.z + 5 || playerPosition.z < cableDrone.z && playerPosition.z > cableDrone.z - 5){
+  
+  cableDrone.drawCircle(40);
+  cableDrone.getDistance();
+  cableDrone.getPan();
+  cableDrone.move(0,cableDrone.y, cableDrone.z, width-(width/3), cableDrone.y, cableDrone.z);
+  
+  cableDroneScan.drawCircle(10);
+  if (cableDrone.moving == true){
+    cableDroneScan.toggleTrack(true);
+    cableDroneScan.getDistance();
+    cableDroneScan.getPan();
   }
-  
-  
-  // Green sound
-  soundGreen.show(50);
-  soundGreen.getDistance();
-  soundGreen.getPan();
-  if (distanceLines){
-    strokeWeight(abs(soundGreen.distanceStroke));
-    stroke(0,255,0);
-    line(soundGreen.x,soundGreen.y,playerPosition.x,playerPosition.y);
-  }
-  
-  // Blue Sound
-  soundBlue.show(30);
-  soundBlue.getDistance();
-  soundBlue.getPan();
-  if (distanceLines){
-    strokeWeight(abs(soundBlue.distanceStroke));
-    stroke(0,0,255);
-    line(soundBlue.x,soundBlue.y,playerPosition.x,playerPosition.y);
-  }
-  
-  // Red Sound
-  soundRed.show(20);
-  soundRed.getDistance();
-  if (debugMode){ // Hands position of Red sound over to mouse input
-    soundRed.x = mouseX;
-    soundRed.y = mouseY;
-    soundRed.getPan();
-  }
-  
   else{
-    soundRed.getPan();
+    cableDroneScan.toggleTrack(false);
   }
+  cableDroneScan.x = cableDrone.x;
+  cableDroneScan.y = cableDrone.y;
+  cableDroneScan.z = cableDrone.z;
+
+  // Data Cable
+  dataCable.drawRectangle(width-(width/3), 20);
+  dataCable.getDistance();
+  dataCable.getPan();  
   
-  if (distanceLines){
-    strokeWeight(abs(soundRed.distanceStroke));
-    stroke(255,0,0);
-    line(soundRed.x,soundRed.y,playerPosition.x,playerPosition.y);
-  }
+  // Datacenter
+  datacenter.drawCircle(50);
+  datacenter.getDistance();
+  datacenter.getPan();  
   
-  // Purple sound
-  soundPurple.show(10);
-  soundPurple.getDistance();
-  soundPurple.getPan();
+  // Data Transfer
+  dataTransfer.drawCircle(10);
+  dataTransfer.getDistance();
+  dataTransfer.getPan();
   
   // White sound
-  soundWhite.show(10);
+  soundWhite.drawCircle(10);
   soundWhite.getDistance();
   soundWhite.getPan();
 }

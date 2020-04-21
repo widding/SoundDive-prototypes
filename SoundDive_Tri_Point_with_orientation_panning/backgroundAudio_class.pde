@@ -1,7 +1,7 @@
 class backgroundAudio {
   float x, y, z; // Coordinates
   String name; // Name
-  
+  float distanceToPlayer; // Distance to player, used for volume
   // MIDI specific
   int channel; // Channel for the MIDI note
   int action; // Action for the MIDI note.
@@ -48,5 +48,18 @@ class backgroundAudio {
     //println("Volume change to ", value);
     action = 2;
     myBus.sendControllerChange((channel - 1), action, int(value));
+  }
+  
+  // Distance handling
+  void getDistance(){
+    // Get raw distance
+    distanceToPlayer = dist(playerPosition.x, playerPosition.y, z, playerPosition.x, playerPosition.y, playerPosition.z);
+    
+    // Map distance between 1 and 127 for MIDI control
+    // Note this is reversed, so shorter distance equals louder volume
+    float distanceMapped = map(distanceToPlayer, 0, 20, 110, 1); 
+    
+    // Send volume change to Ableton
+    volumeChange(distanceMapped);
   }
 }
