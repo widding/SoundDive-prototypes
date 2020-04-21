@@ -67,10 +67,11 @@ int w_height = 480;
   
   // Middle
   Sound dataTransfer = new Sound("Data transfer", color(255, 0, 255), 100, 10, 0, 200, 7);
-  Sound soundWhite = new Sound("White", color(255, 255, 255), 550, 20, 0, 200, 6);
+  Sound dataStream = new Sound("Data Stream", color(255,255,255), 100,10,0,50,10);
+  Sound dataReceiver = new Sound("White", color(255, 255, 255), 550, 20, 0, 200, 6);
   
   // Deep
-  Sound datacenter = new Sound("Data Center", color(0, 255, 0), w_width - 1, w_height-10, -5, 100, 3);
+  Sound datacenter = new Sound("Data Center", color(0, 255, 0), 440, 380, -5, 100, 3); // change to 440 x 380
   Sound cableDrone = new Sound("Cable Drone", color(255, 255, 0), w_width-(w_width/3)-50, w_height-50, -10, w_width/2, 8);
   Sound cableDroneScan = new Sound("Cable Drone Scan", color(255, 255, 255), cableDrone.x, cableDrone.y, cableDrone.z, w_width/2, 9);
   Sound dataCable = new Sound("Data Cable", color(255,0,0), 0, w_height-30, -10, 60, 5);
@@ -109,6 +110,7 @@ void setup() {
   prevPlayerPositionX = prevPlayerPositionY = Float.MAX_VALUE;
   
   cableDrone.startMove(1,0,0);
+  dataStream.startMove(1,1,0);
 }
 
 
@@ -247,10 +249,15 @@ void draw() {
   dataTransfer.getDistance();
   dataTransfer.getPan();
   
+  dataStream.drawCircle(10);
+  dataStream.getDistance();
+  dataStream.getPan();
+  dataStream.move(dataTransfer.x,dataTransfer.y, dataTransfer.z, dataReceiver.x,dataReceiver.y, dataReceiver.z);
+  
   // White sound
-  soundWhite.drawCircle(10);
-  soundWhite.getDistance();
-  soundWhite.getPan();
+  dataReceiver.drawCircle(10);
+  dataReceiver.getDistance();
+  dataReceiver.getPan();
 }
 
 
