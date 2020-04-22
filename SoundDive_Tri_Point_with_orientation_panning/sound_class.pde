@@ -91,8 +91,8 @@ class Sound {
   }
   
   void move(float x1, float y1, float z1, float x2, float y2, float z2){
-    println("Moving between", x1, " and ", x2);
-    println("At : ", x);
+    //println("Moving between", x1, " and ", x2);
+    //println("At : ", x);
     if (moving == true){
       if (x == x2) speedX = -speedX;
       if (x < x1)  speedX = -speedX;

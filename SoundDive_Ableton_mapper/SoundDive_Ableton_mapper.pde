@@ -34,7 +34,7 @@ void draw(){}
 void keyPressed(){
   if (key == '1') {
     println("Maping action 1");
-    channel = 9;
+    channel = 10;
     action = 1;
     if (playing == false){
       value = 127;
@@ -50,7 +50,7 @@ void keyPressed(){
   }
   
   if (key == '2') {
-    channel = 9;
+    channel = 10;
     action = 2;
     if (playing == false){
       value = 127;
@@ -67,7 +67,7 @@ void keyPressed(){
   }
   
   if (key == '3') {
-    channel = 9;
+    channel = 10;
     action = 3;
     if (playing == false){
       value = 127;
