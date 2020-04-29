@@ -11,6 +11,7 @@ class Sound {
   boolean positionFound = false; // Check if we've located the sound (Cardinal direction in relation to sketch center);
   boolean moving = false; // Check if object is currently moving.
   boolean startled = false;
+  boolean playerClose;
   
   String panning = "Center"; // Helper debug value used to check whether our panning logic works.
   
@@ -45,6 +46,7 @@ class Sound {
     x = soundX;
     y = soundY;
     z = soundZ;
+    playerClose = false;
     if (threshold != 0){
       distanceThreshold = threshold;
     }
@@ -54,30 +56,46 @@ class Sound {
     channel = soundChannel;
   }
 
+  // Is player at same Z or close?
+  void playerClose(){
+    if (playerPosition.z == z || playerPosition.z-3 <= z || playerPosition.z+3 <= z){
+      playerClose = true;
+    }
+    else{
+      playerClose = false;
+    }
+  }
+
   // Draw color
   void drawCircle(int colorDiameter){
-    shape = "Circle";
-    noStroke();
-    fill(debug_color);
-    circle(x,y,colorDiameter);
-    
-    stroke(debug_color);
-    strokeWeight(1);
-    noFill();
-    circle(x,y,distanceThreshold*2);
-    
-    if (distanceLines){
-      strokeWeight(abs(distanceStroke));
+    playerClose();
+    if (playerClose){
+      shape = "Circle";
+      noStroke();
+      fill(debug_color);
+      circle(x,y,colorDiameter);
+      
       stroke(debug_color);
-      line(x,y,playerPosition.x,playerPosition.y);
+      strokeWeight(1);
+      noFill();
+      circle(x,y,distanceThreshold*2);
+      
+      if (distanceLines){
+        strokeWeight(abs(distanceStroke));
+        stroke(debug_color);
+        line(x,y,playerPosition.x,playerPosition.y);
+      }
     }
   }
   
   void drawRectangle(int rectWidth, int rectHeight){
-    shape = "Rectangle";
-    noStroke();
-    fill(debug_color);
-    rect(x,y,rectWidth,rectHeight);
+    playerClose();
+    if (playerClose){
+      shape = "Rectangle";
+      noStroke();
+      fill(debug_color);
+      rect(x,y,rectWidth,rectHeight);
+    }
   }
   
   // Movement
@@ -135,11 +153,14 @@ class Sound {
 
   // Distance handling
   void getDistance(){
+    if (name == "Cable Drone"){
+      println("getdistance reads playerClose as, ", playerClose);
+    } 
     // Get raw distance
     if (shape == "Circle"){
       distanceToPlayer = dist(x,y,playerPosition.x, playerPosition.y);
       // If distance is within threshold for sound, continue on. If not, mute the sound.
-      if (distanceToPlayer <= distanceThreshold){
+      if (distanceToPlayer <= distanceThreshold && playerClose){
         
         // Map distance between 1 and 127 for MIDI control
         // Note this is reversed, so shorter distance equals louder volume
@@ -206,16 +227,15 @@ class Sound {
   }
   
   void toggleTrack(boolean activated){
-    action = 1;
-    if (activated){
-      //println("Toggled sound off");
-      myBus.sendControllerChange((channel - 1), action, 0); // Send a controllerChange
-    }
-    else{
-      //println("Toggled sound on");
-      myBus.sendControllerChange((channel - 1), action, 127); // Send a controllerChange
-    }
-    
+      action = 1;
+      if (activated){
+        //println("Toggled sound off");
+        myBus.sendControllerChange((channel - 1), action, 0); // Send a controllerChange
+      }
+      else{
+        //println("Toggled sound on");
+        myBus.sendControllerChange((channel - 1), action, 127); // Send a controllerChange
+      }    
   }
   
   void volumeChange(float value){

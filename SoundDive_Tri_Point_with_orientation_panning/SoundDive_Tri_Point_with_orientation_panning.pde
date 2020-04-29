@@ -39,6 +39,9 @@ boolean videoMode = false; // Boolean for toggling between Kinect and Video trac
 boolean manualMode = true; // Boolean for toggling between Blob based player movement and Manual mouse movement. Bound to: "M"
 boolean distanceLines = true; // Boolean for toggling distance lines. Bound to: "l"
 
+boolean diving = false;
+boolean rising = false;
+
 PVector playerPosition = new PVector(); // position of player
 int currTime, prevTime;
 float deltaTime;
@@ -61,6 +64,7 @@ int w_height = 480;
   // Background
   backgroundAudio backgroundHigh = new backgroundAudio("Background High", 0,0,10, 1);
   backgroundAudio backgroundDeep = new backgroundAudio("Background Deep", 0,0,-10, 2);
+  backgroundAudio heartbeat = new backgroundAudio("Heartbeat", 0,0,-10, 12);
   
   // High
   Sound droneHighway = new Sound("Drone Highway", color(0, 0, 255), 0, 100, 5, 30, 4);
@@ -206,29 +210,31 @@ void draw() {
   
   // Background sounds
   backgroundHigh.getDistance();
+  //heartbeat.getDistance();
   backgroundDeep.getDistance();
   
   // Drone Highway
   droneHighway.drawRectangle(width, 10);
-  droneHighway.getDistance();
+  //droneHighway.getDistance();
   droneHighway.getPan();
   
   // Cable Drone
   //if (playerPosition.z == cableDrone.z || playerPosition.z > cableDrone.z && cableDrone.z < cableDrone.z + 5 || playerPosition.z < cableDrone.z && playerPosition.z > cableDrone.z - 5){
   
   cableDrone.drawCircle(40);
-  cableDrone.getDistance();
+  //cableDrone.getDistance();
   cableDrone.getPan();
   cableDrone.move(0,cableDrone.y, cableDrone.z, width-(width/3), cableDrone.y, cableDrone.z);
   
+  
   cableDroneScan.drawCircle(10);
   if (cableDrone.moving == true){
-    cableDroneScan.toggleTrack(true);
-    cableDroneScan.getDistance();
-    cableDroneScan.getPan();
+    //cableDroneScan.toggleTrack(true);
+    //cableDroneScan.getDistance();
+    //cableDroneScan.getPan();
   }
   else{
-    cableDroneScan.toggleTrack(false);
+    //cableDroneScan.toggleTrack(false);
   }
   cableDroneScan.x = cableDrone.x;
   cableDroneScan.y = cableDrone.y;
@@ -236,28 +242,68 @@ void draw() {
 
   // Data Cable
   dataCable.drawRectangle(width-(width/3), 20);
-  dataCable.getDistance();
+  //dataCable.getDistance();
   dataCable.getPan();  
   
   // Datacenter
   datacenter.drawCircle(50);
-  datacenter.getDistance();
+  //datacenter.getDistance();
   datacenter.getPan();  
-  
+  datacenter.playerClose();
   // Data Transfer
   //dataTransfer.drawCircle(10);
   //dataTransfer.getDistance();
   //dataTransfer.getPan();
   
   dataStream.drawCircle(10);
-  dataStream.getDistance();
+  //dataStream.getDistance();
   dataStream.getPan();
   dataStream.move(dataTransfer.x,dataTransfer.y, dataTransfer.z, dataReceiver.x,dataReceiver.y, dataReceiver.z);
   
   // White sound
   dataReceiver.drawCircle(10);
-  dataReceiver.getDistance();
+  //dataReceiver.getDistance();
   dataReceiver.getPan();
+  
+  
+  // Dive-area
+  noFill();
+  stroke(255,255,255);
+  circle(width-50,50,50);
+  
+  if (dist(playerPosition.x,playerPosition.y,width-50,50) <= 50 && playerPosition.z != -10){
+    diving = true;
+  }
+  else{
+    diving = false;
+    println("Player diving = ", diving);
+  }
+  
+  if (diving == true){
+    if (playerPosition.z > -10){
+      playerPosition.z -= 0.01;
+      println("Player diving to ", playerPosition.z);
+    }
+  }
+  
+  // Rise-area
+  noFill();
+  stroke(255,255,255);
+  circle(50,height-50,50);
+  
+  if (dist(playerPosition.x,playerPosition.y,50,height-50) <= 50 && playerPosition.z != 10){
+    rising = true;
+  }
+  else{
+    rising = false;
+  }
+  
+  if (rising == true){
+    if (playerPosition.z < 10){
+      playerPosition.z += 0.01;
+      println("Player rising to ", playerPosition.z);
+    }
+  }
 }
 
 
