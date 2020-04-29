@@ -153,9 +153,6 @@ class Sound {
 
   // Distance handling
   void getDistance(){
-    if (name == "Cable Drone"){
-      println("getdistance reads playerClose as, ", playerClose);
-    } 
     // Get raw distance
     if (shape == "Circle"){
       distanceToPlayer = dist(x,y,playerPosition.x, playerPosition.y);
@@ -194,7 +191,6 @@ class Sound {
         if (playerPosition.x > x && playerPosition.y > y - distanceThreshold || playerPosition.x > x && playerPosition.y < y + distanceThreshold){
           // Activate track in Ableton if it's not already enabled
           if (soundPlaying == false){
-            println("Track activated");
             toggleTrack(soundPlaying);
             soundPlaying = true;
           
@@ -265,22 +261,36 @@ class Sound {
   
       // Helper statements meant for debugging. We continuously send the panning to achieve a smooth panning effect.
       // These statements just help us get a general idea if everything is working.
-      fill(255,255,255);
-      text(panning,x,y);
-      text(panMapped,x,y+20);
-        
-      if (panMapped >= 0 && panMapped < 42 && panning != "Left"){
-        if (debugMode) println(name, "is left panned");
-        panning = "Left";
-      }
-      if (panMapped > 42 && panMapped < 85 && panning != "Center"){
-        if (debugMode) println(name, "is center panned");
-        panning = "Center";
-      }
-      if (panMapped > 85 && panMapped < 127 && panning != "Right"){
-        if (debugMode) println(name, "is right Panned");
-        panning = "Right";
+      if (playerClose){
+        fill(255,255,255);
+        text(panning,x,y);
+        text(panMapped,x,y+20);
+          
+        if (panMapped >= 0 && panMapped < 42 && panning != "Left"){
+          if (debugMode) println(name, "is left panned");
+          panning = "Left";
+        }
+        if (panMapped > 42 && panMapped < 85 && panning != "Center"){
+          if (debugMode) println(name, "is center panned");
+          panning = "Center";
+        }
+        if (panMapped > 85 && panMapped < 127 && panning != "Right"){
+          if (debugMode) println(name, "is right Panned");
+          panning = "Right";
+        }
       }
     }
+  }
+  
+  void initSound(String shape, int shapeSize1, int shapeSize2){
+    if (shape == "Circle"){
+      drawCircle(shapeSize1);
+    }
+    if (shape == "Rectangle"){
+      drawRectangle(shapeSize1,shapeSize2);
+    }
+    getDistance();
+    getPan();  
+    playerClose();
   }
 }

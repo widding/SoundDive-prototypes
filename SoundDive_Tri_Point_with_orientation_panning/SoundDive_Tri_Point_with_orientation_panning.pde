@@ -35,9 +35,9 @@ Tracker tracker; // tracker for detecting light blobs in video input
 Blob [] blobs; // list of blobs
 
 boolean debugMode = false; // Boolean to toggle debug info. Bound to: "p"
-boolean videoMode = false; // Boolean for toggling between Kinect and Video tracking. Bound to: "v"
+boolean kinectEnabled = false; // Boolean for toggling between Kinect and Video tracking. Bound to: "v"
 boolean manualMode = true; // Boolean for toggling between Blob based player movement and Manual mouse movement. Bound to: "M"
-boolean distanceLines = true; // Boolean for toggling distance lines. Bound to: "l"
+boolean distanceLines = false; // Boolean for toggling distance lines. Bound to: "l"
 
 boolean diving = false;
 boolean rising = false;
@@ -83,16 +83,18 @@ int w_height = 480;
 
 void setup() {
   size(640, 480);
+  if (kinectEnabled == true){
+    // setting up the Kinect
+    kinect = new Kinect(this);
+    kinect.initVideo();
+    kinect.enableIR(true);
+  }
   
-  // setting up the Kinect
-  kinect = new Kinect(this);
-  kinect.initVideo();
-  kinect.enableIR(true);
-  
-  // Setting up debug video
-  video = new Movie(this, "IR_test_video_3_dots_v1_640x480.mp4"); // video file in data folder to use for simulation
-  video.play();
-  
+  if (kinectEnabled == false){
+    // Setting up debug video
+    video = new Movie(this, "IR_test_video_3_dots_v1_640x480.mp4"); // video file in data folder to use for simulation
+    video.play();
+  }
   tracker = new Tracker(); // Creating the tracker object
   
   // TRACKER SETTINGS
@@ -121,14 +123,14 @@ void setup() {
 void draw() {
   video.loadPixels();
 
-  if (videoMode == false){
+  if (kinectEnabled == true){
     image(kinect.getVideoImage(), 0, 0);
     
     // updates the tracker with newest video frame
     tracker.update(kinect.getVideoImage());
   }
   
-  if (videoMode == true){
+  if (kinectEnabled == false){
     image(video, 0, 0);
     
     if (video.time() > video.duration() -2){ 
@@ -168,6 +170,12 @@ void draw() {
   // visualizes all blobs from the tracker object
   tracker.show(); 
   
+  
+  // ----------------------------------------------------------------
+  // ************************ Player handling ************************
+ // ----------------------------------------------------------------
+  
+  
   // Visualize player tracking overlay
   if (playerFoundThisFrame){
     drawOverlay(); // draw visual overlay
@@ -190,23 +198,15 @@ void draw() {
   }
   prevPlayerPositionX = playerPosition.x;
   prevPlayerPositionY = playerPosition.y;
-
-  /*
-    Sound handling
-  */
-  
-  // Center dot
-  noStroke();
-  fill(255,255,255);
-  ellipse(width/2,height/2,10,10);
-  
-  // Center line
-  stroke(255,255,255);
-  line(0,height/2,width,height/2);
-  noStroke();
   
   // Get a rotation of player
   rotation = round(frontAngle);
+  
+ 
+// ----------------------------------------------------------------
+// ************************ Sound handling ************************
+// ----------------------------------------------------------------
+
   
   // Background sounds
   backgroundHigh.getDistance();
@@ -214,56 +214,42 @@ void draw() {
   backgroundDeep.getDistance();
   
   // Drone Highway
-  droneHighway.drawRectangle(width, 10);
-  //droneHighway.getDistance();
-  droneHighway.getPan();
+  droneHighway.initSound("Rectangle", width, 10);
   
   // Cable Drone
   //if (playerPosition.z == cableDrone.z || playerPosition.z > cableDrone.z && cableDrone.z < cableDrone.z + 5 || playerPosition.z < cableDrone.z && playerPosition.z > cableDrone.z - 5){
   
-  cableDrone.drawCircle(40);
-  //cableDrone.getDistance();
-  cableDrone.getPan();
+  cableDrone.initSound("Circle", 40, 0);
   cableDrone.move(0,cableDrone.y, cableDrone.z, width-(width/3), cableDrone.y, cableDrone.z);
   
-  
-  cableDroneScan.drawCircle(10);
-  if (cableDrone.moving == true){
-    //cableDroneScan.toggleTrack(true);
-    //cableDroneScan.getDistance();
-    //cableDroneScan.getPan();
-  }
-  else{
-    //cableDroneScan.toggleTrack(false);
-  }
-  cableDroneScan.x = cableDrone.x;
-  cableDroneScan.y = cableDrone.y;
-  cableDroneScan.z = cableDrone.z;
+    // Extra sound for player interaction requires extra logic.
+      cableDroneScan.drawCircle(10);
+      if (cableDrone.moving == true){
+        //cableDroneScan.toggleTrack(true);
+        //cableDroneScan.getDistance();
+        //cableDroneScan.getPan();
+      }
+      else{
+        //cableDroneScan.toggleTrack(false);
+      }
+      cableDroneScan.x = cableDrone.x;
+      cableDroneScan.y = cableDrone.y;
+      cableDroneScan.z = cableDrone.z;
 
   // Data Cable
-  dataCable.drawRectangle(width-(width/3), 20);
-  //dataCable.getDistance();
-  dataCable.getPan();  
+  dataCable.initSound("Rectangle",width-(width/3), 20);
   
   // Datacenter
-  datacenter.drawCircle(50);
-  //datacenter.getDistance();
-  datacenter.getPan();  
-  datacenter.playerClose();
+  datacenter.initSound("Circle",50, 0);
+
   // Data Transfer
-  //dataTransfer.drawCircle(10);
-  //dataTransfer.getDistance();
-  //dataTransfer.getPan();
+  dataTransfer.initSound("Circle", 10, 0);
   
-  dataStream.drawCircle(10);
-  //dataStream.getDistance();
-  dataStream.getPan();
+  dataStream.initSound("Circle",10,0);
   dataStream.move(dataTransfer.x,dataTransfer.y, dataTransfer.z, dataReceiver.x,dataReceiver.y, dataReceiver.z);
   
   // White sound
-  dataReceiver.drawCircle(10);
-  //dataReceiver.getDistance();
-  dataReceiver.getPan();
+  //dataReceiver.initSound("Circle",10,0);
   
   
   // Dive-area
@@ -276,13 +262,11 @@ void draw() {
   }
   else{
     diving = false;
-    println("Player diving = ", diving);
   }
   
   if (diving == true){
     if (playerPosition.z > -10){
       playerPosition.z -= 0.01;
-      println("Player diving to ", playerPosition.z);
     }
   }
   
@@ -301,7 +285,6 @@ void draw() {
   if (rising == true){
     if (playerPosition.z < 10){
       playerPosition.z += 0.01;
-      println("Player rising to ", playerPosition.z);
     }
   }
 }
@@ -438,8 +421,8 @@ void keyPressed() {
   }
   
   if (key == 'v'){
-    videoMode = !videoMode;
-    println("Video mode is ", videoMode);
+    kinectEnabled = !kinectEnabled;
+    println("kinectEnabled is ", kinectEnabled);
   }
   
   if (key == 'l'){
@@ -449,7 +432,7 @@ void keyPressed() {
   
   if (key == 'm'){
     manualMode = !manualMode;
-    println("Manual control is ", videoMode);
+    println("Manual control is ", manualMode);
   }
   
   if (key == CODED && manualMode == true){
