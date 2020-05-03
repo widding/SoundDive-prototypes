@@ -66,12 +66,15 @@ class Sound {
 
   // Is player at same Z or close?
   void playerClose(){
+    if (z != 99){
       if (playerPosition.z == z || playerPosition.z > z && playerPosition.z < z + 3 || playerPosition.z < z && playerPosition.z > z - 3){
-      playerClose = true;
+        playerClose = true;
+      }
+      else{
+        playerClose = false;
+      }
     }
-    else{
-      playerClose = false;
-    }
+    if (z == 99) playerClose = true;
   }
 
   // Draw color
@@ -93,6 +96,9 @@ class Sound {
         stroke(debug_color);
         line(x,y,playerPosition.x,playerPosition.y);
       }
+    }
+    else{
+      if (type == "Drone") println("Not close to ", name);
     }
   }
   
@@ -173,7 +179,8 @@ class Sound {
         
         // Map distance between 1 and 127 for MIDI control
         // Note this is reversed, so shorter distance equals louder volume
-        float distanceMapped = map(distanceToPlayer, 0, 300, 127, 1); 
+        float distanceMapped = distanceMapped = map(distanceToPlayer, 0, 300, 127, 1); 
+        if (type == "Drone Trail") distanceMapped = map(distanceToPlayer, 0, 300, 127, 60);
         
         // Activate track in Ableton if it's not already enabled
         if (soundPlaying == false){

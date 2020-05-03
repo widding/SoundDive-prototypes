@@ -74,18 +74,22 @@ int w_height = 480;
   // Player
   Sound playerMovement = new Sound("Player Movement", color(255,255,255), playerPosition.x, playerPosition.y, playerPosition.z, 5, 4);
   
+  // Elevators
+  Sound bubbleElevatorDown = new Sound("Bubble Elevator Down", color(255,255,255), 50, w_height-50, 99, 100, 21);
+  Sound bubbleElevatorUp = new Sound("Bubble Elevator Up", color(255,255,255), w_width-50, 50, 99, 100, 22);
+  
   // High
   //Sound droneHighway = new Sound("Drone Highway", color(0, 0, 255), 0, 100, 5, 30, 4);
   Sound highwayDrone1 = new Sound("Highway Drone 1", color(0,0,255), 0, 100, 7, 230, 13);
   Sound highwayDrone1_Trail = new Sound("Highway Drone 1_trail", color(255,255,255), highwayDrone1.x-200, highwayDrone1.y, highwayDrone1.z, highwayDrone1.distanceThreshold*2, 14);
   
-  Sound highwayDrone2 = new Sound("Highway Drone 2", color(0,255,00), w_width, 110, 7, 230, 15);
+  Sound highwayDrone2 = new Sound("Highway Drone 2", color(0,255,00), w_width, 150, 7, 230, 15);
   Sound highwayDrone2_Trail = new Sound("Highway Drone 2_trail", color(0,255,0), highwayDrone2.x-50, highwayDrone2.y, highwayDrone2.z, highwayDrone2.distanceThreshold*2, 16);
   
-  Sound highwayDrone3 = new Sound("Highway Drone 3", color(255,0,0), w_width/2, 130, 7, 300, 17);
+  Sound highwayDrone3 = new Sound("Highway Drone 3", color(255,0,0), w_width/2, 200, 7, 300, 17);
   Sound highwayDrone3_Trail = new Sound("Highway Drone 3_trail", color(255,0,0), highwayDrone3.x-50, highwayDrone3.y, highwayDrone3.z, highwayDrone3.distanceThreshold*2, 18);
   
-  Sound highwayDrone4 = new Sound("Highway Drone 4", color(0,255,255), 100, 140, 7, 750, 19);
+  Sound highwayDrone4 = new Sound("Highway Drone 4", color(0,255,255), 100, 250, 7, 750, 19);
   Sound highwayDrone4_Trail = new Sound("Highway Drone 4_trail", color(0,255,255), highwayDrone4.x-50, highwayDrone4.y, highwayDrone4.z, highwayDrone4.distanceThreshold*2, 20);
   
   Sound highwayDrone5 = new Sound("Highway Drone 5", color(0,255,255), -500, 140, 7, 30, 21);
@@ -260,37 +264,44 @@ void draw() {
     playerMovement.volumeChange(prevPlayerSpeedVolume);
   }
   
+  
+  bubbleElevatorUp.getDistance();
+  bubbleElevatorDown.getDistance();
+  
   // Drone Highway
   highwayDrone1.initSound(10, "Drone");
   highwayDrone1.move(-500,highwayDrone1.y,highwayDrone1.z, width+500, highwayDrone1.y, highwayDrone1.z);
   highwayDrone1_Trail.initSound(10, "Drone Trail");
   if (highwayDrone1.speedX > 0) highwayDrone1_Trail.x = highwayDrone1.x - (200 + highwayDrone1.distanceThreshold-50);
   if (highwayDrone1.speedX < 0) highwayDrone1_Trail.x = highwayDrone1.x + (200 + highwayDrone1.distanceThreshold-50);
+ 
   
-  
+ 
   highwayDrone2.initSound(10, "Drone");
   highwayDrone2.move(width+5000,highwayDrone2.y,highwayDrone2.z, -5000, highwayDrone2.y, highwayDrone2.z);
   highwayDrone2_Trail.initSound(10, "Drone Trail");
   if (highwayDrone2.speedX > 0) highwayDrone2_Trail.x = highwayDrone2.x - (200 + highwayDrone2.distanceThreshold-50);
   if (highwayDrone2.speedX < 0) highwayDrone2_Trail.x = highwayDrone2.x + (200 + highwayDrone2.distanceThreshold-50);
+ 
   
   highwayDrone3.initSound(10, "Drone");
   highwayDrone3.move(width+1750,highwayDrone3.y,highwayDrone3.z, -1750, highwayDrone3.y, highwayDrone3.z);
-  highwayDrone3_Trail.initSound(10, "Drone");
+  highwayDrone3_Trail.initSound(10, "Drone Trail");
   if (highwayDrone3.speedX > 0) highwayDrone3_Trail.x = highwayDrone3.x - (200 + highwayDrone3.distanceThreshold-50);
   if (highwayDrone3.speedX < 0) highwayDrone3_Trail.x = highwayDrone3.x + (200 + highwayDrone3.distanceThreshold-50);
   
   
   highwayDrone4.initSound(10, "Drone");
-  highwayDrone4.move(-200,highwayDrone4.y,highwayDrone4.z, width+200, highwayDrone4.y, highwayDrone4.z);
-  highwayDrone4_Trail.initSound(10, "Drone");
+  highwayDrone4.move(-2000,highwayDrone4.y,highwayDrone4.z, width+2000, highwayDrone4.y, highwayDrone4.z);
+  highwayDrone4_Trail.initSound(10, "Drone Trail");
   if (highwayDrone4.speedX > 0) highwayDrone4_Trail.x = highwayDrone4.x - (200 + highwayDrone4.distanceThreshold-50);
   if (highwayDrone4.speedX < 0) highwayDrone4_Trail.x = highwayDrone4.x + (200 + highwayDrone4.distanceThreshold-50);
+  
   
   /*
   highwayDrone5.initSound(10, "Drone");
   highwayDrone5.move(-5000,highwayDrone5.y,highwayDrone5.z, width+5000, highwayDrone5.y, highwayDrone5.z);
-  highwayDrone5_Trail.initSound(10, "Drone");
+  highwayDrone5_Trail.initSound(10, "Drone Trail");
   highwayDrone5_Trail.x = highwayDrone5.x - 50;
   */
   
@@ -331,11 +342,9 @@ void draw() {
   
   
   // Dive-area
-  noFill();
-  stroke(255,255,255);
-  circle(width-50,50,50);
+  bubbleElevatorUp.drawCircle(50);
   
-  if (dist(playerPosition.x,playerPosition.y,width-50,50) <= 50 && playerPosition.z != -10){
+  if (dist(playerPosition.x,playerPosition.y,bubbleElevatorUp.x,bubbleElevatorUp.y) <= 50 && playerPosition.z != -10){
     diving = true;
   }
   else{
@@ -349,11 +358,9 @@ void draw() {
   }
   
   // Rise-area
-  noFill();
-  stroke(255,255,255);
-  circle(50,height-50,50);
+  bubbleElevatorDown.drawCircle(50);
   
-  if (dist(playerPosition.x,playerPosition.y,50,height-50) <= 50 && playerPosition.z != 10){
+  if (dist(playerPosition.x,playerPosition.y,bubbleElevatorDown.x,bubbleElevatorDown.y) <= 50 && playerPosition.z != 10){
     rising = true;
   }
   else{
@@ -362,7 +369,7 @@ void draw() {
   
   if (rising == true){
     if (playerPosition.z < 10){
-      playerPosition.z += 0.01;
+      playerPosition.z += 0.025;
     }
   }
   
