@@ -159,6 +159,10 @@ class Sound {
     }
   }
 
+  void setPlaybackSpeed(int speed){
+    println("Setting ", name, " to speed ", speed);
+  }
+
   // Distance handling
   void getDistance(){
     // Get raw distance

@@ -47,7 +47,10 @@ int currTime, prevTime;
 float deltaTime;
  
 float prevPlayerPositionX, prevPlayerPositionY;
-float playerVelX, playerVelY, playerSpeed;
+float playerVelX, playerVelY;
+int playerSpeed;
+int playerSpeedVolume;
+float prevPlayerSpeedVolume = -1;
 
 float frontAngle = 0.0; // front facing angle of player
 float prevFrontAngle;
@@ -67,6 +70,9 @@ int w_height = 480;
   backgroundAudio backgroundHigh = new backgroundAudio("Background High", 0,0,10, 1);
   backgroundAudio backgroundDeep = new backgroundAudio("Background Deep", 0,0,-10, 2);
   backgroundAudio heartbeat = new backgroundAudio("Heartbeat", 0,0,-10, 12);
+  
+  // Player
+  Sound playerMovement = new Sound("Player Movement", color(255,255,255), playerPosition.x, playerPosition.y, playerPosition.z, 5, 4);
   
   // High
   //Sound droneHighway = new Sound("Drone Highway", color(0, 0, 255), 0, 100, 5, 30, 4);
@@ -207,6 +213,7 @@ void draw() {
     drawOverlay(); // draw visual overlay
   }
   
+  /*
   // Get player speed
   // get the current time
   currTime = millis();
@@ -220,8 +227,12 @@ void draw() {
     playerVelX = (playerPosition.y - prevPlayerPositionX) / deltaTime;
     playerVelY = (playerPosition.y - prevPlayerPositionY) / deltaTime;
     float playerSpeedUnmapped = sqrt(playerVelX*playerVelX + playerVelY*playerVelY);
-    playerSpeed = parseInt(map(playerSpeedUnmapped,0,20000,0,10));
-  }
+    //playerSpeed = parseInt(map(playerSpeedUnmapped,0,20000,0,10));
+    playerSpeed = parseInt(playerSpeedUnmapped);
+  }*/
+  
+  playerSpeed = parseInt(abs(playerPosition.x-prevPlayerPositionX) + abs(playerPosition.y-prevPlayerPositionY));
+  
   prevPlayerPositionX = playerPosition.x;
   prevPlayerPositionY = playerPosition.y;
   
@@ -238,9 +249,18 @@ void draw() {
   backgroundHigh.getDistance();
   //heartbeat.getDistance();
   backgroundDeep.getDistance();
+  playerSpeedVolume = parseInt(map(playerSpeed,1,30,60,100));
+  if (playerSpeed > 0){
+    playerMovement.volumeChange(playerSpeedVolume);
+    prevPlayerSpeedVolume = playerSpeedVolume;
+  }
+  if (playerSpeed == 0) {
+    if (prevPlayerSpeedVolume == -1) prevPlayerSpeedVolume = playerSpeedVolume;
+    prevPlayerSpeedVolume -= 0.75;
+    playerMovement.volumeChange(prevPlayerSpeedVolume);
+  }
   
   // Drone Highway
-  //droneHighway.initSound("Rectangle", width, 10);
   highwayDrone1.initSound(10, "Drone");
   highwayDrone1.move(-500,highwayDrone1.y,highwayDrone1.z, width+500, highwayDrone1.y, highwayDrone1.z);
   highwayDrone1_Trail.initSound(10, "Drone Trail");
