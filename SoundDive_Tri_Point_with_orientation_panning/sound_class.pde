@@ -16,6 +16,7 @@ class Sound {
   String panning = "Center"; // Helper debug value used to check whether our panning logic works.
   
   String shape = "Circle"; // Defaults to circle, can be changed to Rectangle for larger sounds. Requires extra coords.
+  String type = "Static";
   
   // MIDI specific
   int channel; // Channel for the MIDI note
@@ -28,8 +29,13 @@ class Sound {
       1 = turn on or off
       2 = volume
       3 = panning
-      4 = play Main note
-      5 = play Secondary note
+      4 = launch clip.
+      
+      These action numbers are offset by 4, when channels exceed 16 eg:
+      1 = 5, turn on or off
+      2 = 6, volume
+      3 = 7, panning
+      4 = 8, launch clip
       
     The value is usually a number between 1 and 127, and tells Ableton what to do.
     
@@ -37,6 +43,8 @@ class Sound {
       Channel 1, Action 2 and Value 127 means: turn track 1 up to max volume.
       Channel 3, Action 1 and Value 0 means: turn track 3 off.
       Channel 2, action 3 and Value 60 means: pan track 2 in between L(1) and R(127).
+      
+      Channel 1, Action 5 and Value 127 means: turn track 1+16 (17) up to max volume.
   */
   
   // Constructor
@@ -58,7 +66,7 @@ class Sound {
 
   // Is player at same Z or close?
   void playerClose(){
-    if (playerPosition.z == z || playerPosition.z-3 <= z || playerPosition.z+3 <= z){
+      if (playerPosition.z == z || playerPosition.z > z && playerPosition.z < z + 3 || playerPosition.z < z && playerPosition.z > z - 3){
       playerClose = true;
     }
     else{
@@ -109,11 +117,11 @@ class Sound {
   }
   
   void move(float x1, float y1, float z1, float x2, float y2, float z2){
-    //println("Moving between", x1, " and ", x2);
-    //println("At : ", x);
-    if (moving == true){
+
+    if (moving == true){    
       if (x == x2) speedX = -speedX;
       if (x < x1)  speedX = -speedX;
+      if (x > x2) speedX = -speedX;
       
       if (y == y2) speedY = -speedY;
       if (y < y1)  speedY = -speedY;
@@ -166,7 +174,8 @@ class Sound {
         // Activate track in Ableton if it's not already enabled
         if (soundPlaying == false){
           //println("Player is within threshold");
-          toggleTrack(soundPlaying);
+          if (type != "Drone") toggleTrack(soundPlaying);
+          if (type == "Drone") playTrack(false);
           soundPlaying = true;
         
         } 
@@ -180,7 +189,8 @@ class Sound {
         if (soundPlaying == true){
           //println("Player left threshold");
           // Mute track in Ableton
-          toggleTrack(soundPlaying);
+          if (type != "Drone") toggleTrack(soundPlaying);
+          if (type == "Drone") playTrack(true);
           soundPlaying = false;
         }
         
@@ -226,24 +236,28 @@ class Sound {
       action = 1;
       if (activated){
         //println("Toggled sound off");
-        myBus.sendControllerChange((channel - 1), action, 0); // Send a controllerChange
+        if (channel <= 16) midiBus.sendControllerChange((channel - 1), action, 0);
+        if (channel > 16)  midiBus.sendControllerChange((channel - 17), action+4, 0);
       }
       else{
         //println("Toggled sound on");
-        myBus.sendControllerChange((channel - 1), action, 127); // Send a controllerChange
+        if (channel <= 16) midiBus.sendControllerChange((channel - 1), action, 127);
+        if (channel > 16)  midiBus.sendControllerChange((channel - 17), action+4, 127);
       }    
   }
   
   void volumeChange(float value){
     action = 2;
-    myBus.sendControllerChange((channel - 1), action, int(value));
+    if (channel <= 16) midiBus.sendControllerChange((channel - 1), action, int(value));
+    if (channel > 16)  midiBus.sendControllerChange((channel - 17), action+4, int(value));
   }
   
   void getPan(){
     action = 3;
     
     if (shape == "Rectangle"){
-      myBus.sendControllerChange((channel -1), action, 127/2);
+      if (channel <= 16) midiBus.sendControllerChange((channel -1), action, 127/2);
+      if (channel > 16)  midiBus.sendControllerChange((channel - 17), action+4, 127/2);
     }
     else{
       // Get the angle of player ear and line to sound
@@ -257,13 +271,14 @@ class Sound {
       int panMapped = int(map(pan, 0,180, 127,0));
       // This value should then be sent to Ableton.
       
-      myBus.sendControllerChange((channel -1), action, panMapped);
+      if (channel <= 16) midiBus.sendControllerChange((channel -1), action, panMapped);
+      if (channel > 16)  midiBus.sendControllerChange((channel - 17), action+4, panMapped);
   
       // Helper statements meant for debugging. We continuously send the panning to achieve a smooth panning effect.
       // These statements just help us get a general idea if everything is working.
       if (playerClose){
         fill(255,255,255);
-        text(panning,x,y);
+        text(name + ", " + panning,x,y);
         text(panMapped,x,y+20);
           
         if (panMapped >= 0 && panMapped < 42 && panning != "Left"){
@@ -282,13 +297,40 @@ class Sound {
     }
   }
   
-  void initSound(String shape, int shapeSize1, int shapeSize2){
-    if (shape == "Circle"){
-      drawCircle(shapeSize1);
-    }
-    if (shape == "Rectangle"){
-      drawRectangle(shapeSize1,shapeSize2);
-    }
+  void playTrack(boolean activated){
+    action = 4;
+    if (activated){
+        if (name != "Highway Drone 1") println("Stopping ", name);
+        if (channel <= 16) midiBus.sendControllerChange((channel - 1), action, 127); // Send a controllerChange
+        if (channel > 16)  midiBus.sendControllerChange((channel - 17), action+4, 127); // Send a controllerChange  
+      }
+      else{
+        if (name != "Highway Drone 1") println("Launching ", name);
+        if (channel <= 16) midiBus.sendControllerChange((channel - 1), action, 127); // Send a controllerChange
+        if (channel > 16)  midiBus.sendControllerChange((channel - 17), action+4, 127); // Send a controllerChange  
+      }    
+  }
+  
+  // Init static circular sound
+  void initSound(int circleDiameter){
+    drawCircle(circleDiameter);
+    getDistance();
+    getPan();  
+    playerClose();
+  }
+  
+  // Init static rectangular sound
+  void initSound(int rectangleWidth, int rectangleHeight){
+    drawRectangle(rectangleWidth,rectangleHeight);
+    getDistance();
+    getPan();  
+    playerClose();
+  }
+  
+  // init drone sound
+  void initSound(int circleDiameter, String sound_type){
+    type = sound_type;
+    drawCircle(circleDiameter);
     getDistance();
     getPan();  
     playerClose();

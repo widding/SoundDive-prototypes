@@ -35,11 +35,13 @@ class backgroundAudio {
     action = 1;
     if (activated){
       //println("Toggled sound off");
-      myBus.sendControllerChange((channel - 1), action, 0); // Send a controllerChange
+      if (channel <= 16) midiBus.sendControllerChange((channel - 1), action, 0); // Send a controllerChange
+      if (channel > 16)  midiBus.sendControllerChange((channel - 17), action+4, 0);
     }
     else{
       //println("Toggled sound on");
-      myBus.sendControllerChange((channel - 1), action, 127); // Send a controllerChange
+      if (channel <= 16) midiBus.sendControllerChange((channel - 1), action, 127); // Send a controllerChange
+      if (channel > 16)  midiBus.sendControllerChange((channel - 17), action+4, 127);
     }
     
   }
@@ -47,7 +49,8 @@ class backgroundAudio {
   void volumeChange(float value){
     //println("Volume change to ", value);
     action = 2;
-    myBus.sendControllerChange((channel - 1), action, int(value));
+    if (channel <= 16) midiBus.sendControllerChange((channel - 1), action, int(value));
+    if (channel > 16)  midiBus.sendControllerChange((channel - 17), action+4, int(value));
   }
   
   // Distance handling

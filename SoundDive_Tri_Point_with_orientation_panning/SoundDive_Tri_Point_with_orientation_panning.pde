@@ -23,7 +23,7 @@ import org.openkinect.freenect.*;
 import org.openkinect.processing.*;
 import themidibus.*;
 
-MidiBus myBus; // Used for sending info and commands to Ableton Live
+MidiBus midiBus; // Used for sending info and commands to Ableton Live. Handles channels 1-16
 int channel = 0;
 int number = 0;
 float value;
@@ -50,6 +50,8 @@ float prevPlayerPositionX, prevPlayerPositionY;
 float playerVelX, playerVelY, playerSpeed;
 
 float frontAngle = 0.0; // front facing angle of player
+float prevFrontAngle;
+float playerRotation = 0;
 float rotation;
 boolean playerFoundThisFrame = false; // flag showing if player was tracked in current frame
 
@@ -67,7 +69,21 @@ int w_height = 480;
   backgroundAudio heartbeat = new backgroundAudio("Heartbeat", 0,0,-10, 12);
   
   // High
-  Sound droneHighway = new Sound("Drone Highway", color(0, 0, 255), 0, 100, 5, 30, 4);
+  //Sound droneHighway = new Sound("Drone Highway", color(0, 0, 255), 0, 100, 5, 30, 4);
+  Sound highwayDrone1 = new Sound("Highway Drone 1", color(0,0,255), 0, 100, 7, 230, 13);
+  Sound highwayDrone1_Trail = new Sound("Highway Drone 1_trail", color(255,255,255), highwayDrone1.x-200, highwayDrone1.y, highwayDrone1.z, highwayDrone1.distanceThreshold*2, 14);
+  
+  Sound highwayDrone2 = new Sound("Highway Drone 2", color(0,255,00), w_width, 110, 7, 230, 15);
+  Sound highwayDrone2_Trail = new Sound("Highway Drone 2_trail", color(0,255,0), highwayDrone2.x-50, highwayDrone2.y, highwayDrone2.z, highwayDrone2.distanceThreshold*2, 16);
+  
+  Sound highwayDrone3 = new Sound("Highway Drone 3", color(255,0,0), w_width/2, 130, 7, 300, 17);
+  Sound highwayDrone3_Trail = new Sound("Highway Drone 3_trail", color(255,0,0), highwayDrone3.x-50, highwayDrone3.y, highwayDrone3.z, highwayDrone3.distanceThreshold*2, 18);
+  
+  Sound highwayDrone4 = new Sound("Highway Drone 4", color(0,255,255), 100, 140, 7, 750, 19);
+  Sound highwayDrone4_Trail = new Sound("Highway Drone 4_trail", color(0,255,255), highwayDrone4.x-50, highwayDrone4.y, highwayDrone4.z, highwayDrone4.distanceThreshold*2, 20);
+  
+  Sound highwayDrone5 = new Sound("Highway Drone 5", color(0,255,255), -500, 140, 7, 30, 21);
+  Sound highwayDrone5_Trail = new Sound("Highway Drone 5_trail", color(0,255,255), highwayDrone5.x-50, highwayDrone5.y, highwayDrone5.z, highwayDrone5.distanceThreshold*2, 22);
   
   // Middle
   Sound dataTransfer = new Sound("Data transfer", color(255, 0, 255), 100, 10, 0, 200, 7);
@@ -110,13 +126,23 @@ void setup() {
   //tracker.pixelToAreaRatio = 0.5;   // ratio of pixels in the bounding box that must belon to the blob (1.0 means all pixels) 
   //tracker.widthToHeightRatio = 0.4; // ratio of how squared the bounding box must be. 0.0 is perfect square
   
-  myBus = new MidiBus(this, -1, "soundDiveMidi"); // Create a new MidiBus with no input device and the default Java Sound Synthesizer as the output device.
+  midiBus = new MidiBus(this, -1, "soundDiveMidi"); // Create a new MidiBus with no input device and the default Java Sound Synthesizer as the output device.
 
   currTime = prevTime = millis();
   prevPlayerPositionX = prevPlayerPositionY = Float.MAX_VALUE;
   
   cableDrone.startMove(1,0,0);
   dataStream.startMove(3,0,0);
+  
+  highwayDrone1.startMove(6,0,0);
+  
+  highwayDrone2.startMove(10,0,0);
+  
+  highwayDrone3.startMove(5,0,0);
+  
+  highwayDrone4.startMove(7,0,0);
+  
+  highwayDrone5.startMove(7,0,0);
 }
 
 
@@ -214,12 +240,44 @@ void draw() {
   backgroundDeep.getDistance();
   
   // Drone Highway
-  droneHighway.initSound("Rectangle", width, 10);
+  //droneHighway.initSound("Rectangle", width, 10);
+  highwayDrone1.initSound(10, "Drone");
+  highwayDrone1.move(-500,highwayDrone1.y,highwayDrone1.z, width+500, highwayDrone1.y, highwayDrone1.z);
+  highwayDrone1_Trail.initSound(10, "Drone Trail");
+  if (highwayDrone1.speedX > 0) highwayDrone1_Trail.x = highwayDrone1.x - (200 + highwayDrone1.distanceThreshold-50);
+  if (highwayDrone1.speedX < 0) highwayDrone1_Trail.x = highwayDrone1.x + (200 + highwayDrone1.distanceThreshold-50);
+  
+  
+  highwayDrone2.initSound(10, "Drone");
+  highwayDrone2.move(width+5000,highwayDrone2.y,highwayDrone2.z, -5000, highwayDrone2.y, highwayDrone2.z);
+  highwayDrone2_Trail.initSound(10, "Drone Trail");
+  if (highwayDrone2.speedX > 0) highwayDrone2_Trail.x = highwayDrone2.x - (200 + highwayDrone2.distanceThreshold-50);
+  if (highwayDrone2.speedX < 0) highwayDrone2_Trail.x = highwayDrone2.x + (200 + highwayDrone2.distanceThreshold-50);
+  
+  highwayDrone3.initSound(10, "Drone");
+  highwayDrone3.move(width+1750,highwayDrone3.y,highwayDrone3.z, -1750, highwayDrone3.y, highwayDrone3.z);
+  highwayDrone3_Trail.initSound(10, "Drone");
+  if (highwayDrone3.speedX > 0) highwayDrone3_Trail.x = highwayDrone3.x - (200 + highwayDrone3.distanceThreshold-50);
+  if (highwayDrone3.speedX < 0) highwayDrone3_Trail.x = highwayDrone3.x + (200 + highwayDrone3.distanceThreshold-50);
+  
+  
+  highwayDrone4.initSound(10, "Drone");
+  highwayDrone4.move(-200,highwayDrone4.y,highwayDrone4.z, width+200, highwayDrone4.y, highwayDrone4.z);
+  highwayDrone4_Trail.initSound(10, "Drone");
+  if (highwayDrone4.speedX > 0) highwayDrone4_Trail.x = highwayDrone4.x - (200 + highwayDrone4.distanceThreshold-50);
+  if (highwayDrone4.speedX < 0) highwayDrone4_Trail.x = highwayDrone4.x + (200 + highwayDrone4.distanceThreshold-50);
+  
+  /*
+  highwayDrone5.initSound(10, "Drone");
+  highwayDrone5.move(-5000,highwayDrone5.y,highwayDrone5.z, width+5000, highwayDrone5.y, highwayDrone5.z);
+  highwayDrone5_Trail.initSound(10, "Drone");
+  highwayDrone5_Trail.x = highwayDrone5.x - 50;
+  */
   
   // Cable Drone
   //if (playerPosition.z == cableDrone.z || playerPosition.z > cableDrone.z && cableDrone.z < cableDrone.z + 5 || playerPosition.z < cableDrone.z && playerPosition.z > cableDrone.z - 5){
   
-  cableDrone.initSound("Circle", 40, 0);
+  cableDrone.initSound(40);
   cableDrone.move(0,cableDrone.y, cableDrone.z, width-(width/3), cableDrone.y, cableDrone.z);
   
     // Extra sound for player interaction requires extra logic.
@@ -237,15 +295,15 @@ void draw() {
       cableDroneScan.z = cableDrone.z;
 
   // Data Cable
-  dataCable.initSound("Rectangle",width-(width/3), 20);
+  dataCable.initSound(width-(width/3), 20);
   
   // Datacenter
-  datacenter.initSound("Circle",50, 0);
+  datacenter.initSound(50);
 
   // Data Transfer
-  dataTransfer.initSound("Circle", 10, 0);
+  dataTransfer.initSound(10);
   
-  dataStream.initSound("Circle",10,0);
+  dataStream.initSound(10);
   dataStream.move(dataTransfer.x,dataTransfer.y, dataTransfer.z, dataReceiver.x,dataReceiver.y, dataReceiver.z);
   
   // White sound
@@ -287,6 +345,8 @@ void draw() {
       playerPosition.z += 0.01;
     }
   }
+  
+  prevFrontAngle = frontAngle;
 }
 
 
@@ -438,21 +498,13 @@ void keyPressed() {
   if (key == CODED && manualMode == true){
     if (keyCode == SHIFT){
       if (playerPosition.z > -10){
-        println("Player diving");
         playerPosition.z = playerPosition.z - 1;
-      }
-      else{
-        println("Player has reached the seafloor");
       }
     }
   }
   if (key == ' ' && manualMode == true){
     if (playerPosition.z < 10){
-      println("Player moving up");
       playerPosition.z = playerPosition.z + 1;
-    }
-    else{
-      println("Player has reached the surface");
     }
   }
   
