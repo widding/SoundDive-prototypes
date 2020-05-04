@@ -1,12 +1,16 @@
 /* 
-  This code is for the AIR LAB orientation and position tracker project.
-  More info and resources if found at GitHub: xxx
-  Code and project by: Halfdan Hauch Jensen, halj@itu.dk, AIR LAB, IT University of Cph.
-  Please make sure to credit when reusing this code... :-)
+  SoundDive
+  
+  An interactive, augmented virtuality experience powered by spatial audio and kinect motion tracking.
+  
+  Part of a bachelors project at the IT University of Copenhagen.
+  Developed as part of a collaboration between AIR LAB at ITU, and CATCH.
+  
+  Kinect tracking code by: Halfdan Hauch Jensen, halj@itu.dk, AIR LAB, IT University of Cph.
 */
 
 /*
- For Windows 10, 64bit:
+  How to set up Kinect Tracking for Windows 10, 64bit:
  
  1) Download and install Kinect 1.7 SDK
  2) Download Zadig and replace the drivers for
@@ -35,7 +39,7 @@ Tracker tracker; // tracker for detecting light blobs in video input
 Blob [] blobs; // list of blobs
 
 boolean debugMode = false; // Boolean to toggle debug info. Bound to: "p"
-boolean kinectEnabled = true; // Boolean for toggling between Kinect and Video tracking. Bound to: "v"
+boolean kinectEnabled = false; // Boolean for toggling between Kinect and Video tracking. Bound to: "v"
 boolean manualMode = true; // Boolean for toggling between Blob based player movement and Manual mouse movement. Bound to: "M"
 boolean distanceLines = false; // Boolean for toggling distance lines. Bound to: "l"
 
@@ -43,11 +47,8 @@ boolean diving = false;
 boolean rising = false;
 
 PVector playerPosition = new PVector(); // position of player
-int currTime, prevTime;
-float deltaTime;
  
 float prevPlayerPositionX, prevPlayerPositionY;
-float playerVelX, playerVelY;
 int playerSpeed;
 int playerSpeedVolume;
 float prevPlayerSpeedVolume = -1;
@@ -58,13 +59,23 @@ float playerRotation = 0;
 float rotation;
 boolean playerFoundThisFrame = false; // flag showing if player was tracked in current frame
 
+
+int timer;
+int droneEncounterTimer = -1;
+int timeElapsed = -1;
+int timeForDroneEncounter = -1;
+int prevDroneIndex;
+
+int playbackStart = -1;
+boolean droneEncounter = false;
+
 // Setup window
 int w_width = 640;
 int w_height = 480;
 
 
 // Setup sounds
-// Format: Name, Color, X, Y, Z, Distance Threshold, Channel (track) and Sub Sound
+// Format: Name, Color, X, Y, Z, Distance Threshold and Channel (track)
 
   // Background
   backgroundAudio backgroundHigh = new backgroundAudio("Background High", 0,0,10, 1);
@@ -72,36 +83,29 @@ int w_height = 480;
   backgroundAudio heartbeat = new backgroundAudio("Heartbeat", 0,0,-10, 12);
   
   // Player
-  Sound playerMovement = new Sound("Player Movement", color(255,255,255), playerPosition.x, playerPosition.y, playerPosition.z, 5, 4);
+  //Sound playerMovement = new Sound("Player Movement", color(255,255,255), playerPosition.x, playerPosition.y, playerPosition.z, 5, 4);
   
   // Elevators
   Sound bubbleElevatorDown = new Sound("Bubble Elevator Down", color(255,255,0), 50, w_height-50, 99, 100, 21);
   Sound bubbleElevatorUp = new Sound("Bubble Elevator Up", color(255,255,255), 420, 30, 99, 100, 22);
   
   // High
-  //Sound droneHighway = new Sound("Drone Highway", color(0, 0, 255), 0, 100, 5, 30, 4);
-  Sound highwayDrone1 = new Sound("Highway Drone 1", color(0,0,255), 0, 100, 7, 230, 13);
-  Sound highwayDrone1_Trail = new Sound("Highway Drone 1_trail", color(255,255,255), highwayDrone1.x-200, highwayDrone1.y, highwayDrone1.z, highwayDrone1.distanceThreshold*2, 14);
-  
-  Sound highwayDrone2 = new Sound("Highway Drone 2", color(0,255,00), w_width, 150, 7, 230, 15);
-  Sound highwayDrone2_Trail = new Sound("Highway Drone 2_trail", color(0,255,0), highwayDrone2.x-50, highwayDrone2.y, highwayDrone2.z, highwayDrone2.distanceThreshold*2, 16);
-  
-  Sound highwayDrone3 = new Sound("Highway Drone 3", color(255,0,0), w_width/2, 200, 7, 300, 17);
-  Sound highwayDrone3_Trail = new Sound("Highway Drone 3_trail", color(255,0,0), highwayDrone3.x-50, highwayDrone3.y, highwayDrone3.z, highwayDrone3.distanceThreshold*2, 18);
-  
-  Sound highwayDrone4 = new Sound("Highway Drone 4", color(0,255,255), 100, 250, 7, 750, 19);
-  Sound highwayDrone4_Trail = new Sound("Highway Drone 4_trail", color(0,255,255), highwayDrone4.x-50, highwayDrone4.y, highwayDrone4.z, highwayDrone4.distanceThreshold*2, 20);
-  
-  Sound highwayDrone5 = new Sound("Highway Drone 5", color(0,255,255), -500, 140, 7, 30, 21);
-  Sound highwayDrone5_Trail = new Sound("Highway Drone 5_trail", color(0,255,255), highwayDrone5.x-50, highwayDrone5.y, highwayDrone5.z, highwayDrone5.distanceThreshold*2, 22);
+    // Drone encounters
+    // Drone format: Name, Track Length and Channel.
+    Drone droneLeftRight = new Drone("Drone LR", 10, 11);
+    Drone droneRightLeft = new Drone("Drone RL", 10, 12);
+    Drone droneFront = new Drone("Drone Front", 10, 13);
+    Drone drone2RightLeft = new Drone("Drone 2 RL", 10, 14);
+    Drone drone2LeftRight = new Drone("Drone 2 LR", 10, 15);
+    String drones[] = {"droneLeftRight", "droneRightLeft", "droneFront", "drone2RightLeft", "drone2LeftRight"}; // Array of Drones to pick from.
   
   // Middle
   Sound dataTransfer = new Sound("Data transfer", color(255, 0, 255), 100, 10, 0, 200, 7);
-  Sound dataStream = new Sound("Data Stream", color(255,255,255), 100,10,0, 100 ,10);
+  Sound dataStream = new Sound("Data Stream", color(255,255,255), 100,10,0, 300 ,10);
   Sound dataReceiver = new Sound("White", color(255, 255, 255), 550, 20, 0, 200, 6);
   
   // Deep
-  Sound datacenter = new Sound("Data Center", color(0, 255, 0), 440, 380, -5, 400, 3); // change to 440 x 380
+  Sound datacenter = new Sound("Data Center", color(0, 255, 0), 440, 380, -10, 400, 3); // change to 440 x 380
   Sound cableDrone = new Sound("Cable Drone", color(255, 255, 0), w_width-(w_width/3)-50, w_height-50, -10, w_width/2, 8);
   Sound cableDroneScan = new Sound("Cable Drone Scan", color(255, 255, 255), cableDrone.x, cableDrone.y, cableDrone.z, w_width/2, 9);
   Sound dataCable = new Sound("Data Cable", color(255,0,0), 0, w_height-30, -10, 60, 5);
@@ -138,26 +142,15 @@ void setup() {
   
   midiBus = new MidiBus(this, -1, "soundDiveMidi"); // Create a new MidiBus with no input device and the default Java Sound Synthesizer as the output device.
 
-  currTime = prevTime = millis();
   prevPlayerPositionX = prevPlayerPositionY = Float.MAX_VALUE;
   
   cableDrone.startMove(1,0,0);
   dataStream.startMove(3,0,0);
-  
-  highwayDrone1.startMove(6,0,0);
-  
-  highwayDrone2.startMove(10,0,0);
-  
-  highwayDrone3.startMove(5,0,0);
-  
-  highwayDrone4.startMove(7,0,0);
-  
-  highwayDrone5.startMove(7,0,0);
 }
 
 
 void draw() {
-  
+  timer = millis();
 
   if (kinectEnabled == true){
     image(kinect.getVideoImage(), 0, 0);
@@ -218,24 +211,6 @@ void draw() {
     drawOverlay(); // draw visual overlay
   }
   
-  /*
-  // Get player speed
-  // get the current time
-  currTime = millis();
-  // calculate the elapsed time in seconds
-  deltaTime = (currTime - prevTime)/1000.0;
-  // remember current time for the next frame
-  prevTime = currTime;
- 
-  // Calculate velocity in X and Y directions (pixels / second)
-  if(prevPlayerPositionX != Float.MAX_VALUE){
-    playerVelX = (playerPosition.y - prevPlayerPositionX) / deltaTime;
-    playerVelY = (playerPosition.y - prevPlayerPositionY) / deltaTime;
-    float playerSpeedUnmapped = sqrt(playerVelX*playerVelX + playerVelY*playerVelY);
-    //playerSpeed = parseInt(map(playerSpeedUnmapped,0,20000,0,10));
-    playerSpeed = parseInt(playerSpeedUnmapped);
-  }*/
-  
   playerSpeed = parseInt(abs(playerPosition.x-prevPlayerPositionX) + abs(playerPosition.y-prevPlayerPositionY));
   
   prevPlayerPositionX = playerPosition.x;
@@ -270,58 +245,46 @@ void draw() {
   //bubbleElevatorDown.getDistance();
   
   // Drone Highway
-  highwayDrone1.initSound(10, "Drone");
-  highwayDrone1.move(-500,highwayDrone1.y,highwayDrone1.z, width+500, highwayDrone1.y, highwayDrone1.z);
-  highwayDrone1_Trail.initSound(10, "Drone Trail");
-  if (highwayDrone1.speedX > 0) highwayDrone1_Trail.x = highwayDrone1.x - (200 + highwayDrone1.distanceThreshold-50);
-  if (highwayDrone1.speedX < 0) highwayDrone1_Trail.x = highwayDrone1.x + (200 + highwayDrone1.distanceThreshold-50);
- 
-  
- /*
-  highwayDrone2.initSound(10, "Drone");
-  highwayDrone2.move(width+5000,highwayDrone2.y,highwayDrone2.z, -5000, highwayDrone2.y, highwayDrone2.z);
-  highwayDrone2_Trail.initSound(10, "Drone Trail");
-  if (highwayDrone2.speedX > 0) highwayDrone2_Trail.x = highwayDrone2.x - (200 + highwayDrone2.distanceThreshold-50);
-  if (highwayDrone2.speedX < 0) highwayDrone2_Trail.x = highwayDrone2.x + (200 + highwayDrone2.distanceThreshold-50);
- */
-  
-  highwayDrone3.initSound(10, "Drone");
-  highwayDrone3.move(width+1750,highwayDrone3.y,highwayDrone3.z, -1750, highwayDrone3.y, highwayDrone3.z);
-  highwayDrone3_Trail.initSound(10, "Drone Trail");
-  if (highwayDrone3.speedX > 0) highwayDrone3_Trail.x = highwayDrone3.x - (200 + highwayDrone3.distanceThreshold-50);
-  if (highwayDrone3.speedX < 0) highwayDrone3_Trail.x = highwayDrone3.x + (200 + highwayDrone3.distanceThreshold-50);
-  
-  /*
-  highwayDrone4.initSound(10, "Drone");
-  highwayDrone4.move(-2000,highwayDrone4.y,highwayDrone4.z, width+2000, highwayDrone4.y, highwayDrone4.z);
-  highwayDrone4_Trail.initSound(10, "Drone Trail");
-  if (highwayDrone4.speedX > 0) highwayDrone4_Trail.x = highwayDrone4.x - (200 + highwayDrone4.distanceThreshold-50);
-  if (highwayDrone4.speedX < 0) highwayDrone4_Trail.x = highwayDrone4.x + (200 + highwayDrone4.distanceThreshold-50);
-  
-  
-  /*
-  highwayDrone5.initSound(10, "Drone");
-  highwayDrone5.move(-5000,highwayDrone5.y,highwayDrone5.z, width+5000, highwayDrone5.y, highwayDrone5.z);
-  highwayDrone5_Trail.initSound(10, "Drone Trail");
-  highwayDrone5_Trail.x = highwayDrone5.x - 50;
-  */
+  if (playerPosition.z >= 5 && playerPosition.z <= 10) {
+    if (droneEncounterTimer == -1){
+      println("You're in drone territory boy");
+      droneEncounterTimer = timer;
+    }
+    //println("Entered drone territory at ", droneEncounterTimer, " millis");
+    //println("Time spent in drone territory : ", timeElapsed);
+    timeElapsed = (timer - droneEncounterTimer) / 1000;
+    
+    text("Time till encounter: " + (timeForDroneEncounter - timeElapsed), 10, 200);
+    
+    if (timeForDroneEncounter == -1) timeForDroneEncounter = int(random(5,30));
+    
+    if (timeElapsed == timeForDroneEncounter && droneEncounter == false){
+      String drone = "";
+      int index = int(random(drones.length));  // Gets a random Drone or "None" from array
+      if (index != prevDroneIndex) drone = drones[index];
+      if (index == prevDroneIndex) drone = drones[index+1];
+      droneEncounter(drone);
+      timeForDroneEncounter = int(random(timeElapsed + 1, timeElapsed + 30));
+      prevDroneIndex = index;
+    }
+  }
+  else{
+    if (droneEncounterTimer != -1){
+      println("Left drone territory");
+      timeElapsed = 0;
+      timeForDroneEncounter = -1;
+      droneEncounterTimer = -1;
+    }
+  }
   
   // Cable Drone
   //if (playerPosition.z == cableDrone.z || playerPosition.z > cableDrone.z && cableDrone.z < cableDrone.z + 5 || playerPosition.z < cableDrone.z && playerPosition.z > cableDrone.z - 5){
-  /*
   cableDrone.initSound(40);
   cableDrone.move(0,cableDrone.y, cableDrone.z, width-(width/3), cableDrone.y, cableDrone.z);
   
     // Extra sound for player interaction requires extra logic.
-      cableDroneScan.drawCircle(10);
-      if (cableDrone.moving == true){
-        //cableDroneScan.toggleTrack(true);
-        //cableDroneScan.getDistance();
-        //cableDroneScan.getPan();
-      }
-      else{
-        //cableDroneScan.toggleTrack(false);
-      }
+      cableDroneScan.initSound(10);
+      
       cableDroneScan.x = cableDrone.x;
       cableDroneScan.y = cableDrone.y;
       cableDroneScan.z = cableDrone.z;
@@ -333,14 +296,10 @@ void draw() {
   datacenter.initSound(50);
 
   // Data Transfer
-  dataTransfer.initSound(10);
+  //dataTransfer.initSound(10);
   
-  dataStream.initSound(10);
-  dataStream.move(dataTransfer.x,dataTransfer.y, dataTransfer.z, dataReceiver.x,dataReceiver.y, dataReceiver.z);
-  
-  // White sound
-  //dataReceiver.initSound("Circle",10,0);
-  */
+  //dataStream.initSound(10);
+  //dataStream.move(dataTransfer.x,dataTransfer.y, dataTransfer.z, dataReceiver.x,dataReceiver.y, dataReceiver.z);
   
   // Dive-area
   bubbleElevatorUp.drawCircle(50);
@@ -354,7 +313,7 @@ void draw() {
   
   if (diving == true){
     if (playerPosition.z > -10){
-      playerPosition.z -= 0.01;
+      playerPosition.z -= 0.05;
     }
   }
   
@@ -370,21 +329,27 @@ void draw() {
   
   if (rising == true){
     if (playerPosition.z < 10){
-      playerPosition.z += 0.025;
+      playerPosition.z += 0.05;
     }
   }
   
   prevFrontAngle = frontAngle;
-  playerPosition.z = 7;
+  //playerPosition.z = 7;
 }
-
-
-
 
 // ----------------------------------------------------------------
 // ************************ HELPER METHODS ************************
 // ----------------------------------------------------------------
 
+void droneEncounter(String drone){
+  if (drone == "droneLeftRight") droneLeftRight.encounter(true);
+  if (drone == "droneRightLeft") droneRightLeft.encounter(true);
+  if (drone == "droneFront") droneFront.encounter(true);
+  if (drone == "drone2RightLeft") drone2RightLeft.encounter(true);
+  if (drone == "drone2LeftRight") drone2LeftRight.encounter(true);
+
+  if (drone == "None") println("No drone encountered");
+}
 
 // --- method that detect a player in the blob list data, updates global variables and returns boolean ---
 boolean findPlayer(){

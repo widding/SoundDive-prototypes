@@ -60,7 +60,9 @@ class backgroundAudio {
     
     // Map distance between 1 and 127 for MIDI control
     // Note this is reversed, so shorter distance equals louder volume
-    float distanceMapped = map(distanceToPlayer, 0, 20, 110, 1); 
+    float distanceMapped = map(distanceToPlayer, 0, 20, 110, 40);
+    //if (name == "Background High") println("Volume for bgHigh = ", distanceMapped);
+    //if (name == "Background Deep") println("Volume for bgDeep = ", distanceMapped);
     //if (name == "Background High") distanceMapped = map(distanceToPlayer, 0, 20, 40, 1); 
     
     // Send volume change to Ableton

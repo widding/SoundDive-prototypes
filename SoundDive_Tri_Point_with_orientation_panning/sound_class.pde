@@ -162,6 +162,7 @@ class Sound {
       speedY = 0;
       speedZ = 0;
       moving = false;
+      if (name == "Cable Drone") cableDroneScan.playTrack(false);
     }
   }
 
@@ -229,6 +230,9 @@ class Sound {
               float distance = playerPosition.y - y;
               float distanceMapped = map(distance, 0, 30, 127, 1);
               volumeChange(distanceMapped);
+            }
+            if (playerPosition.z-2 > z){
+              volumeChange(0);
             }
           }
         }
