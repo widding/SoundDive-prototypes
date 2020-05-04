@@ -35,7 +35,7 @@ Tracker tracker; // tracker for detecting light blobs in video input
 Blob [] blobs; // list of blobs
 
 boolean debugMode = false; // Boolean to toggle debug info. Bound to: "p"
-boolean kinectEnabled = false; // Boolean for toggling between Kinect and Video tracking. Bound to: "v"
+boolean kinectEnabled = true; // Boolean for toggling between Kinect and Video tracking. Bound to: "v"
 boolean manualMode = true; // Boolean for toggling between Blob based player movement and Manual mouse movement. Bound to: "M"
 boolean distanceLines = false; // Boolean for toggling distance lines. Bound to: "l"
 
@@ -75,8 +75,8 @@ int w_height = 480;
   Sound playerMovement = new Sound("Player Movement", color(255,255,255), playerPosition.x, playerPosition.y, playerPosition.z, 5, 4);
   
   // Elevators
-  Sound bubbleElevatorDown = new Sound("Bubble Elevator Down", color(255,255,255), 50, w_height-50, 99, 100, 21);
-  Sound bubbleElevatorUp = new Sound("Bubble Elevator Up", color(255,255,255), w_width-50, 50, 99, 100, 22);
+  Sound bubbleElevatorDown = new Sound("Bubble Elevator Down", color(255,255,0), 50, w_height-50, 99, 100, 21);
+  Sound bubbleElevatorUp = new Sound("Bubble Elevator Up", color(255,255,255), 420, 30, 99, 100, 22);
   
   // High
   //Sound droneHighway = new Sound("Drone Highway", color(0, 0, 255), 0, 100, 5, 30, 4);
@@ -157,7 +157,7 @@ void setup() {
 
 
 void draw() {
-  video.loadPixels();
+  
 
   if (kinectEnabled == true){
     image(kinect.getVideoImage(), 0, 0);
@@ -167,6 +167,7 @@ void draw() {
   }
   
   if (kinectEnabled == false){
+    video.loadPixels();
     image(video, 0, 0);
     
     if (video.time() > video.duration() -2){ 
@@ -253,7 +254,7 @@ void draw() {
   backgroundHigh.getDistance();
   //heartbeat.getDistance();
   backgroundDeep.getDistance();
-  playerSpeedVolume = parseInt(map(playerSpeed,1,30,60,100));
+  /*playerSpeedVolume = parseInt(map(playerSpeed,1,30,60,100));
   if (playerSpeed > 0){
     playerMovement.volumeChange(playerSpeedVolume);
     prevPlayerSpeedVolume = playerSpeedVolume;
@@ -262,11 +263,11 @@ void draw() {
     if (prevPlayerSpeedVolume == -1) prevPlayerSpeedVolume = playerSpeedVolume;
     prevPlayerSpeedVolume -= 0.75;
     playerMovement.volumeChange(prevPlayerSpeedVolume);
-  }
+  }*/
   
   
-  bubbleElevatorUp.getDistance();
-  bubbleElevatorDown.getDistance();
+  //bubbleElevatorUp.getDistance();
+  //bubbleElevatorDown.getDistance();
   
   // Drone Highway
   highwayDrone1.initSound(10, "Drone");
@@ -276,13 +277,13 @@ void draw() {
   if (highwayDrone1.speedX < 0) highwayDrone1_Trail.x = highwayDrone1.x + (200 + highwayDrone1.distanceThreshold-50);
  
   
- 
+ /*
   highwayDrone2.initSound(10, "Drone");
   highwayDrone2.move(width+5000,highwayDrone2.y,highwayDrone2.z, -5000, highwayDrone2.y, highwayDrone2.z);
   highwayDrone2_Trail.initSound(10, "Drone Trail");
   if (highwayDrone2.speedX > 0) highwayDrone2_Trail.x = highwayDrone2.x - (200 + highwayDrone2.distanceThreshold-50);
   if (highwayDrone2.speedX < 0) highwayDrone2_Trail.x = highwayDrone2.x + (200 + highwayDrone2.distanceThreshold-50);
- 
+ */
   
   highwayDrone3.initSound(10, "Drone");
   highwayDrone3.move(width+1750,highwayDrone3.y,highwayDrone3.z, -1750, highwayDrone3.y, highwayDrone3.z);
@@ -290,7 +291,7 @@ void draw() {
   if (highwayDrone3.speedX > 0) highwayDrone3_Trail.x = highwayDrone3.x - (200 + highwayDrone3.distanceThreshold-50);
   if (highwayDrone3.speedX < 0) highwayDrone3_Trail.x = highwayDrone3.x + (200 + highwayDrone3.distanceThreshold-50);
   
-  
+  /*
   highwayDrone4.initSound(10, "Drone");
   highwayDrone4.move(-2000,highwayDrone4.y,highwayDrone4.z, width+2000, highwayDrone4.y, highwayDrone4.z);
   highwayDrone4_Trail.initSound(10, "Drone Trail");
@@ -307,7 +308,7 @@ void draw() {
   
   // Cable Drone
   //if (playerPosition.z == cableDrone.z || playerPosition.z > cableDrone.z && cableDrone.z < cableDrone.z + 5 || playerPosition.z < cableDrone.z && playerPosition.z > cableDrone.z - 5){
-  
+  /*
   cableDrone.initSound(40);
   cableDrone.move(0,cableDrone.y, cableDrone.z, width-(width/3), cableDrone.y, cableDrone.z);
   
@@ -339,7 +340,7 @@ void draw() {
   
   // White sound
   //dataReceiver.initSound("Circle",10,0);
-  
+  */
   
   // Dive-area
   bubbleElevatorUp.drawCircle(50);
@@ -374,6 +375,7 @@ void draw() {
   }
   
   prevFrontAngle = frontAngle;
+  playerPosition.z = 7;
 }
 
 
@@ -402,7 +404,8 @@ boolean findPlayer(){
       // check if the current blob is the back point
       if (angleBetween > 100) {
         playerFound = true; // flag player found
-        playerPosition = blobs[i].center; // update global variable with player position 
+        playerPosition.x = blobs[i].center.x; // update global variable with player position 
+        playerPosition.y = blobs[i].center.y; // update global variable with player position 
 
         
         float rotationA = getRotation(blobs[i].center.x, blobs[i].center.y, blobs[(i+1)%3].center.x, blobs[(i+1)%3].center.y); // rotation of one of the side points

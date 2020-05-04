@@ -182,6 +182,8 @@ class Sound {
         float distanceMapped = distanceMapped = map(distanceToPlayer, 0, 300, 127, 1); 
         if (type == "Drone Trail") distanceMapped = map(distanceToPlayer, 0, 300, 127, 60);
         
+        if (name == "Bubble Elevator Down" || name == "Bubble Elevator Up") distanceMapped = map(distanceToPlayer, 0, 300, 70, 1);
+        
         // Activate track in Ableton if it's not already enabled
         if (soundPlaying == false){
           //println("Player is within threshold");
